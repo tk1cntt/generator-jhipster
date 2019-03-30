@@ -1,5 +1,5 @@
 /**
- * Copyright 2013-2018 the original author or authors from the JHipster project.
+ * Copyright 2013-2019 the original author or authors from the JHipster project.
  *
  * This file is part of the JHipster project, see https://www.jhipster.tech/
  * for more information.
@@ -54,11 +54,11 @@ function askForKubernetesServiceType() {
         {
             type: 'list',
             name: 'kubernetesServiceType',
-            message: 'Choose the kubernetes service type for your edge services',
+            message: 'Choose the Kubernetes service type for your edge services',
             choices: [
                 {
                     value: 'LoadBalancer',
-                    name: 'LoadBalancer - Let a kubernetes cloud provider automatically assign an IP'
+                    name: 'LoadBalancer - Let a Kubernetes cloud provider automatically assign an IP'
                 },
                 {
                     value: 'NodePort',

@@ -1,5 +1,5 @@
 <%#
- Copyright 2013-2018 the original author or authors from the JHipster project.
+ Copyright 2013-2019 the original author or authors from the JHipster project.
 
  This file is part of the JHipster project, see https://www.jhipster.tech/
  for more information.
@@ -35,7 +35,7 @@ spec:
     spec:
       initContainers:
         - name: init-ds
-          image: busybox
+          image: busybox:latest
           command:
             - '/bin/sh'
             - '-c'
@@ -115,16 +115,28 @@ spec:
         <%_ if (app.prodDatabaseType === 'mariadb') { _%>
         - name: SPRING_DATASOURCE_URL
           value: jdbc:mariadb://<%= app.baseName.toLowerCase() %>-mariadb.<%= kubernetesNamespace %>.svc.cluster.local:3306/<%= app.baseName.toLowerCase() %>
+        - name: SPRING_DATASOURCE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: <%= app.baseName.toLowerCase() %>-mariadb
+              key: mariadb-root-password
         <%_ } _%>
         <%_ if (app.prodDatabaseType === 'postgresql') { _%>
         - name: SPRING_DATASOURCE_URL
           value: jdbc:postgresql://<%= app.baseName.toLowerCase() %>-postgresql.<%= kubernetesNamespace %>.svc.cluster.local:5432/<%= app.baseName %>
+        - name: SPRING_DATASOURCE_USERNAME
+          value: <%= app.baseName.toLowerCase() %>
+        - name: SPRING_DATASOURCE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: <%= app.baseName.toLowerCase() %>-postgresql
+              key: postgres-password
         <%_ } _%>
         <%_ if (app.prodDatabaseType === 'mongodb') { _%>
         - name: SPRING_DATA_MONGODB_DATABASE
           value: <%= app.baseName %>
         - name: SPRING_DATA_MONGODB_URI
-          value: "mongodb://<% for (let i = 0; i < app.dbPeerCount; i++) { %><%= app.baseName.toLowerCase() %>-mongodb-<%= i %>.<%= app.baseName.toLowerCase() %>-mongodb.<%= kubernetesNamespace %>:27017<% if (i < (app.dbPeerCount-1)) { %>,<% }} %>"
+          value: "mongodb://<% for (let i = 0; i < app.dbPeerCount; i++) { %><%= app.baseName.toLowerCase() %>-mongodb-<%= i %>.<%= app.baseName.toLowerCase() %>-mongodb.<%= kubernetesNamespace %>:27017<% if (reactive) { %>/?waitQueueMultiple=1000<% } %><% if (i < (app.dbPeerCount-1)) { %>,<% }} %>"
         <%_ } _%>
         <%_ if (app.prodDatabaseType === 'couchbase') { _%>
         - name: SPRING_COUCHBASE_BOOTSTRAP_HOSTS

@@ -1,5 +1,5 @@
 /**
- * Copyright 2013-2018 the original author or authors from the JHipster project.
+ * Copyright 2013-2019 the original author or authors from the JHipster project.
  *
  * This file is part of the JHipster project, see https://www.jhipster.tech/
  * for more information.
@@ -98,6 +98,20 @@ module.exports = class extends BaseGenerator {
             defaults: 'jhi'
         });
 
+        // This adds support for a `--entity-suffix` flag
+        this.option('entity-suffix', {
+            desc: 'Add suffix after entities name',
+            type: String,
+            defaults: ''
+        });
+
+        // This adds support for a `--dto-suffix` flag
+        this.option('dto-suffix', {
+            desc: 'Add suffix after dtos name',
+            type: String,
+            defaults: 'DTO'
+        });
+
         // This adds support for a `--yarn` flag
         this.option('yarn', {
             desc: 'Use yarn instead of npm',
@@ -162,6 +176,16 @@ module.exports = class extends BaseGenerator {
         this.skipCheckLengthOfIdentifier = this.configOptions.skipCheckLengthOfIdentifier =
             this.options['skip-check-length-of-identifier'] || this.config.get('skipCheckLengthOfIdentifier');
         this.jhiPrefix = this.configOptions.jhiPrefix = _.camelCase(this.config.get('jhiPrefix') || this.options['jhi-prefix']);
+        this.uaaBaseName = this.configOptions.uaaBaseName = this.options['uaa-base-name'] || this.config.get('uaaBaseName');
+
+        this.entitySuffix = this.configOptions.entitySuffix = _.isNil(this.config.get('entitySuffix'))
+            ? this.options['entity-suffix']
+            : this.config.get('entitySuffix');
+
+        this.dtoSuffix = this.configOptions.dtoSuffix = _.isNil(this.config.get('dtoSuffix'))
+            ? this.options['dto-suffix']
+            : this.config.get('dtoSuffix');
+
         this.withEntities = this.options['with-entities'];
         this.skipChecks = this.options['skip-checks'];
         const blueprint = this.normalizeBlueprintName(this.options.blueprint || this.config.get('blueprint'));
@@ -171,19 +195,13 @@ module.exports = class extends BaseGenerator {
 
         this.isDebugEnabled = this.configOptions.isDebugEnabled = this.options.debug;
         this.experimental = this.configOptions.experimental = this.options.experimental;
-        this.registerClientTransforms();
+        this.registerPrettierTransform();
     }
 
     get initializing() {
         return {
             validateFromCli() {
-                if (!this.options['from-cli']) {
-                    this.warning(
-                        `Deprecated: JHipster seems to be invoked using Yeoman command. Please use the JHipster CLI. Run ${chalk.red(
-                            'jhipster <command>'
-                        )} instead of ${chalk.red('yo jhipster:<command>')}`
-                    );
-                }
+                this.checkInvocationFromCLI();
             },
 
             displayLogo() {
@@ -191,7 +209,7 @@ module.exports = class extends BaseGenerator {
             },
 
             validateBlueprint() {
-                if (this.blueprint) {
+                if (this.blueprint && !this.skipChecks) {
                     this.checkBlueprint(this.blueprint);
                 }
             },
@@ -285,11 +303,6 @@ module.exports = class extends BaseGenerator {
                 this.configOptions.logo = false;
                 this.configOptions.otherModules = this.otherModules;
                 this.generatorType = 'app';
-                if (this.reactive) {
-                    // TODO: support client in reactive app
-                    this.skipClient = true;
-                    this.generatorType = 'server';
-                }
                 if (this.applicationType === 'microservice') {
                     this.skipClient = true;
                     this.generatorType = 'server';
@@ -329,35 +342,37 @@ module.exports = class extends BaseGenerator {
 
             composeServer() {
                 if (this.skipServer) return;
+                const options = this.options;
+                const configOptions = this.configOptions;
 
                 this.composeWith(require.resolve('../server'), {
+                    ...options,
+                    configOptions,
                     'client-hook': !this.skipClient,
-                    'from-cli': this.options['from-cli'],
-                    configOptions: this.configOptions,
-                    force: this.options.force,
                     debug: this.isDebugEnabled
                 });
             },
 
             composeClient() {
                 if (this.skipClient) return;
+                const options = this.options;
+                const configOptions = this.configOptions;
 
                 this.composeWith(require.resolve('../client'), {
-                    'skip-install': this.options['skip-install'],
-                    'skip-commit-hook': this.options['skip-commit-hook'],
-                    'from-cli': this.options['from-cli'],
-                    configOptions: this.configOptions,
-                    force: this.options.force,
+                    ...options,
+                    configOptions,
                     debug: this.isDebugEnabled
                 });
             },
 
             composeCommon() {
+                const options = this.options;
+                const configOptions = this.configOptions;
+
                 this.composeWith(require.resolve('../common'), {
+                    ...options,
                     'client-hook': !this.skipClient,
-                    'from-cli': this.options['from-cli'],
-                    configOptions: this.configOptions,
-                    force: this.options.force,
+                    configOptions,
                     debug: this.isDebugEnabled
                 });
             },
@@ -392,6 +407,8 @@ module.exports = class extends BaseGenerator {
                     baseName: this.baseName,
                     testFrameworks: this.testFrameworks,
                     jhiPrefix: this.jhiPrefix,
+                    entitySuffix: this.entitySuffix,
+                    dtoSuffix: this.dtoSuffix,
                     skipCheckLengthOfIdentifier: this.skipCheckLengthOfIdentifier,
                     otherModules: this.otherModules,
                     enableTranslation: this.enableTranslation,
@@ -435,12 +452,14 @@ module.exports = class extends BaseGenerator {
 
             regenerateEntities() {
                 if (this.withEntities) {
+                    const options = this.options;
+                    const configOptions = this.configOptions;
                     this.getExistingEntities().forEach(entity => {
                         this.composeWith(require.resolve('../entity'), {
+                            ...options,
+                            configOptions,
                             regenerate: true,
                             'skip-install': true,
-                            'from-cli': this.options['from-cli'],
-                            force: this.options.force,
                             debug: this.isDebugEnabled,
                             arguments: [entity.name]
                         });

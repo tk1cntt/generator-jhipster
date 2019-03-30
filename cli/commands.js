@@ -1,5 +1,5 @@
 /**
- * Copyright 2013-2018 the original author or authors from the JHipster project.
+ * Copyright 2013-2019 the original author or authors from the JHipster project.
  *
  * This file is part of the JHipster project, see https://www.jhipster.tech/
  * for more information.
@@ -83,21 +83,16 @@ Example:
     kubernetes: {
         desc: 'Deploy the current application to Kubernetes'
     },
+    'kubernetes-helm': {
+        alias: 'k8s-helm',
+        desc: 'Deploy the current application to Kubernetes using Helm package manager'
+    },
     languages: {
         argument: ['languages...'],
         desc: 'Select languages from a list of available languages. The i18n files will be copied to the /webapp/i18n folder'
     },
-    // login: {
-    //     desc: 'Link the installed JHipster CLI to your JHipster Online account'
-    // },
-    // logout: {
-    //     desc: 'Unlink the installed JHipster CLI from your JHipster Online account'
-    // },
     openshift: {
         desc: 'Deploy the current application to OpenShift'
-    },
-    'rancher-compose': {
-        desc: 'Deploy the current application to Rancher'
     },
     server: {
         desc: 'DEPRECATED: Create a new JHipster server-side application - Use jhipster --skip-client instead'

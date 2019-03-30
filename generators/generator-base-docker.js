@@ -1,5 +1,5 @@
 /**
- * Copyright 2013-2018 the original author or authors from the JHipster project.
+ * Copyright 2013-2019 the original author or authors from the JHipster project.
  *
  * This file is part of the JHipster project, see https://www.jhipster.tech/
  * for more information.
@@ -16,7 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-const chalk = require('chalk');
 const prompts = require('./docker-prompts');
 const BaseGenerator = require('./generator-base');
 const { loadFromYoRc, checkDocker, checkImages, generateJwtSecret, setAppsFolderPaths } = require('./docker-base');
@@ -47,18 +46,13 @@ module.exports = class extends BaseGenerator {
         });
         this.regenerate = this.options['skip-prompts'];
         this.skipChecks = this.options['skip-checks'];
+        this.registerPrettierTransform();
     }
 
     get initializing() {
         return {
             validateFromCli() {
-                if (!this.options['from-cli']) {
-                    this.warning(
-                        `Deprecated: JHipster seems to be invoked using Yeoman command. Please use the JHipster CLI. Run ${chalk.red(
-                            'jhipster <command>'
-                        )} instead of ${chalk.red('yo jhipster:<command>')}`
-                    );
-                }
+                this.checkInvocationFromCLI();
             },
 
             setupServerConsts() {
@@ -84,7 +78,6 @@ module.exports = class extends BaseGenerator {
                 this.DOCKER_MYSQL = constants.DOCKER_MYSQL;
                 this.DOCKER_MARIADB = constants.DOCKER_MARIADB;
                 this.DOCKER_POSTGRESQL = constants.DOCKER_POSTGRESQL;
-                this.DOCKER_ORACLE = constants.DOCKER_ORACLE;
                 this.DOCKER_MONGODB = constants.DOCKER_MONGODB;
                 this.DOCKER_COUCHBASE = constants.DOCKER_COUCHBASE;
                 this.DOCKER_MEMCACHED = constants.DOCKER_MEMCACHED;

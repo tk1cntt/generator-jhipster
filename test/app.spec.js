@@ -54,6 +54,7 @@ describe('JHipster generator', () => {
                 assert.file(expectedFiles.maven);
                 assert.file(expectedFiles.dockerServices);
                 assert.file(expectedFiles.mysql);
+                assert.file(expectedFiles.hibernateTimeZoneConfig);
                 assert.file(
                     getFilesForOptions(angularFiles, {
                         useSass: false,
@@ -69,6 +70,14 @@ describe('JHipster generator', () => {
             });
             it('contains correct custom prefix when specified', () => {
                 assert.fileContent('angular.json', /"prefix": "test"/);
+            });
+            it('generates a README with no undefined value', () => {
+                assert.noFileContent('README.md', /undefined/);
+            });
+            it('uses correct prettier formatting', () => {
+                // tabWidth = 2 (see generators/common/templates/.prettierrc.ejs)
+                assert.fileContent('webpack/webpack.dev.js', / {2}devtool:/);
+                assert.fileContent('tsconfig.json', / {2}"compilerOptions":/);
             });
         });
 
@@ -116,6 +125,7 @@ describe('JHipster generator', () => {
                 assert.file(expectedFiles.maven);
                 assert.file(expectedFiles.dockerServices);
                 assert.file(expectedFiles.mysql);
+                assert.file(expectedFiles.hibernateTimeZoneConfig);
                 assert.file(
                     getFilesForOptions(reactFiles, {
                         useSass: false,
@@ -128,6 +138,11 @@ describe('JHipster generator', () => {
             });
             it('contains clientFramework with react value', () => {
                 assert.fileContent('.yo-rc.json', /"clientFramework": "react"/);
+            });
+            it('uses correct prettier formatting', () => {
+                // tabWidth = 2 (see generators/common/templates/.prettierrc.ejs)
+                assert.fileContent('webpack/webpack.dev.js', / {2}devtool:/);
+                assert.fileContent('tsconfig.json', / {2}"compilerOptions":/);
             });
         });
 
@@ -169,6 +184,7 @@ describe('JHipster generator', () => {
                 assert.file(expectedFiles.maven);
                 assert.file(expectedFiles.dockerServices);
                 assert.file(expectedFiles.mysql);
+                assert.file(expectedFiles.hibernateTimeZoneConfig);
                 assert.file(
                     getFilesForOptions(angularFiles, {
                         useSass: false,
@@ -223,6 +239,7 @@ describe('JHipster generator', () => {
                 assert.file(expectedFiles.gradle);
                 assert.file(expectedFiles.dockerServices);
                 assert.file(expectedFiles.mysql);
+                assert.file(expectedFiles.hibernateTimeZoneConfig);
                 assert.file(
                     getFilesForOptions(angularFiles, {
                         useSass: false,
@@ -237,7 +254,7 @@ describe('JHipster generator', () => {
     });
 
     context('Application with DB option', () => {
-        describe('mariadb configuration', () => {
+        describe('mariadb', () => {
             before(done => {
                 helpers
                     .run(path.join(__dirname, '../generators/app'))
@@ -275,6 +292,7 @@ describe('JHipster generator', () => {
                 assert.file(expectedFiles.maven);
                 assert.file(expectedFiles.dockerServices);
                 assert.file(expectedFiles.mariadb);
+                assert.file(expectedFiles.hibernateTimeZoneConfig);
                 assert.file(
                     getFilesForOptions(angularFiles, {
                         useSass: false,
@@ -321,6 +339,10 @@ describe('JHipster generator', () => {
             it('creates expected files with "MongoDB"', () => {
                 assert.file(expectedFiles.mongodb);
             });
+            it("doesn't setup liquibase", () => {
+                assert.noFileContent('pom.xml', 'liquibase');
+                assert.noFile(expectedFiles.liquibase);
+            });
             shouldBeV3DockerfileCompatible('mongodb');
         });
 
@@ -357,6 +379,10 @@ describe('JHipster generator', () => {
             it('creates expected files with "Couchbase"', () => {
                 assert.file(expectedFiles.couchbase);
             });
+            it("doesn't setup liquibase", () => {
+                assert.noFileContent('pom.xml', 'liquibase');
+                assert.noFile(expectedFiles.liquibase);
+            });
             shouldBeV3DockerfileCompatible('couchbase');
         });
 
@@ -392,6 +418,7 @@ describe('JHipster generator', () => {
 
             it('creates expected files with "Microsoft SQL Server"', () => {
                 assert.file(expectedFiles.mssql);
+                assert.file(expectedFiles.hibernateTimeZoneConfig);
                 assert.fileContent('pom.xml', /mssql-jdbc/);
                 assert.fileContent(
                     `${SERVER_MAIN_RES_DIR}config/liquibase/changelog/00000000000000_initial_schema.xml`,
@@ -433,6 +460,10 @@ describe('JHipster generator', () => {
 
             it('creates expected files with "Cassandra"', () => {
                 assert.file(expectedFiles.cassandra);
+            });
+            it("doesn't setup liquibase", () => {
+                assert.noFileContent('pom.xml', 'liquibase');
+                assert.noFile(expectedFiles.liquibase);
             });
             shouldBeV3DockerfileCompatible('cassandra');
         });
@@ -505,8 +536,50 @@ describe('JHipster generator', () => {
             it('creates expected files with "PostgreSQL" and "Elasticsearch"', () => {
                 assert.file(expectedFiles.postgresql);
                 assert.file(expectedFiles.elasticsearch);
+                assert.file(expectedFiles.hibernateTimeZoneConfig);
             });
             shouldBeV3DockerfileCompatible('postgresql');
+        });
+
+        describe('no database', () => {
+            before(done => {
+                helpers
+                    .run(path.join(__dirname, '../generators/app'))
+                    .withOptions({ 'from-cli': true, skipInstall: true, skipChecks: true })
+                    .withPrompts({
+                        applicationType: 'microservice',
+                        baseName: 'jhipster',
+                        packageName: 'com.mycompany.myapp',
+                        packageFolder: 'com/mycompany/myapp',
+                        serviceDiscoveryType: false,
+                        authenticationType: 'jwt',
+                        cacheProvider: 'hazelcast',
+                        enableHibernateCache: true,
+                        databaseType: 'no',
+                        devDatabaseType: 'no',
+                        prodDatabaseType: 'no',
+                        useSass: false,
+                        enableTranslation: true,
+                        nativeLanguage: 'en',
+                        languages: ['fr'],
+                        buildTool: 'maven',
+                        rememberMeKey: '5c37379956bd1242f5636c8cb322c2966ad81277',
+                        serverSideOptions: []
+                    })
+                    .on('end', done);
+            });
+
+            it('creates expected files with the microservice application type', () => {
+                assert.file(expectedFiles.jwtServer);
+                assert.file(expectedFiles.microservice);
+                assert.file(expectedFiles.feignConfig);
+                assert.file(expectedFiles.dockerServices);
+                assert.noFile(expectedFiles.userManagementServer);
+            });
+            it("doesn't setup liquibase", () => {
+                assert.noFileContent('pom.xml', 'liquibase');
+                assert.noFile(expectedFiles.liquibase);
+            });
         });
     });
 
@@ -541,6 +614,8 @@ describe('JHipster generator', () => {
 
             it('creates expected files with authenticationType "oauth2"', () => {
                 assert.file(expectedFiles.oauth2);
+                assert.file(expectedFiles.mysql);
+                assert.file(expectedFiles.hibernateTimeZoneConfig);
             });
             it('generates README with instructions for OAuth', () => {
                 assert.fileContent('README.md', 'OAuth 2.0');
@@ -578,6 +653,8 @@ describe('JHipster generator', () => {
             it('creates expected files with authenticationType "oauth2" and elasticsearch', () => {
                 assert.file(expectedFiles.oauth2);
                 assert.file(expectedFiles.elasticsearch);
+                assert.file(expectedFiles.hibernateTimeZoneConfig);
+                assert.file(expectedFiles.mysql);
             });
         });
 
@@ -647,6 +724,8 @@ describe('JHipster generator', () => {
                 assert.file(expectedFiles.server);
                 assert.file(expectedFiles.userManagementServer);
                 assert.file(expectedFiles.hazelcast);
+                assert.file(expectedFiles.mysql);
+                assert.file(expectedFiles.hibernateTimeZoneConfig);
             });
         });
 
@@ -683,6 +762,8 @@ describe('JHipster generator', () => {
                 assert.file(expectedFiles.userManagementServer);
                 assert.file(expectedFiles.client);
                 assert.file(expectedFiles.infinispan);
+                assert.file(expectedFiles.mysql);
+                assert.file(expectedFiles.hibernateTimeZoneConfig);
             });
         });
 
@@ -720,6 +801,8 @@ describe('JHipster generator', () => {
                 assert.file(expectedFiles.client);
                 assert.file(expectedFiles.eureka);
                 assert.file(expectedFiles.infinispan);
+                assert.file(expectedFiles.mysql);
+                assert.file(expectedFiles.hibernateTimeZoneConfig);
             });
         });
 
@@ -756,6 +839,8 @@ describe('JHipster generator', () => {
                 assert.file(expectedFiles.userManagementServer);
                 assert.file(expectedFiles.client);
                 assert.file(expectedFiles.memcached);
+                assert.file(expectedFiles.mysql);
+                assert.file(expectedFiles.hibernateTimeZoneConfig);
             });
         });
 
@@ -800,6 +885,8 @@ describe('JHipster generator', () => {
                 assert.file(expectedFiles.jwtServer);
                 assert.file(expectedFiles.gatling);
                 assert.file(expectedFiles.messageBroker);
+                assert.file(expectedFiles.mysql);
+                assert.file(expectedFiles.hibernateTimeZoneConfig);
             });
         });
 
@@ -842,6 +929,8 @@ describe('JHipster generator', () => {
                 assert.file(expectedFiles.server);
                 assert.file(expectedFiles.userManagementServer);
                 assert.file(expectedFiles.jwtServer);
+                assert.file(expectedFiles.mysql);
+                assert.file(expectedFiles.hibernateTimeZoneConfig);
                 assert.file(expectedFiles.gatling);
                 assert.file(expectedFiles.swaggerCodegen);
             });
@@ -890,6 +979,8 @@ describe('JHipster generator', () => {
                 assert.file(expectedFiles.userManagementServer);
                 assert.file(expectedFiles.gradle);
                 assert.file(expectedFiles.jwtServer);
+                assert.file(expectedFiles.mysql);
+                assert.file(expectedFiles.hibernateTimeZoneConfig);
                 assert.file(expectedFiles.gatling);
                 assert.file(expectedFiles.swaggerCodegen);
                 assert.file(expectedFiles.swaggerCodegenGradle);
@@ -1210,6 +1301,8 @@ describe('JHipster generator', () => {
                 assert.file(expectedFiles.common);
                 assert.file(expectedFiles.server);
                 assert.file(expectedFiles.userManagementServer);
+                assert.file(expectedFiles.mysql);
+                assert.file(expectedFiles.hibernateTimeZoneConfig);
                 assert.file(
                     getFilesForOptions(angularFiles, {
                         useSass: false,
@@ -1260,9 +1353,54 @@ describe('JHipster generator', () => {
                 assert.file(expectedFiles.common);
                 assert.file(expectedFiles.server);
                 assert.file(expectedFiles.userManagementServer);
+                assert.file(expectedFiles.mysql);
+                assert.file(expectedFiles.hibernateTimeZoneConfig);
                 assert.file(expectedFiles.cucumber);
                 assert.noFile([`${TEST_DIR}gatling/conf/gatling.conf`, `${TEST_DIR}gatling/conf/logback.xml`]);
             });
+        });
+    });
+
+    context('App with skip server', () => {
+        before(done => {
+            helpers
+                .run(path.join(__dirname, '../generators/app'))
+                .withOptions({ 'from-cli': true, skipInstall: true, skipServer: true, db: 'mysql', auth: 'jwt', skipChecks: true })
+                .withPrompts({
+                    baseName: 'jhipster',
+                    clientFramework: 'angularX',
+                    packageName: 'com.mycompany.myapp',
+                    packageFolder: 'com/mycompany/myapp',
+                    serviceDiscoveryType: false,
+                    authenticationType: 'jwt',
+                    useSass: false,
+                    enableTranslation: true,
+                    nativeLanguage: 'en',
+                    languages: ['fr'],
+                    rememberMeKey: '5c37379956bd1242f5636c8cb322c2966ad81277'
+                })
+                .on('end', done);
+        });
+
+        it('creates expected files for default configuration with skip server option enabled', () => {
+            assert.file(expectedFiles.common);
+            assert.noFile(expectedFiles.server);
+            assert.noFile(expectedFiles.userManagementServer);
+            assert.noFile(expectedFiles.maven);
+            assert.noFile(expectedFiles.mysql);
+            assert.noFile(expectedFiles.hibernateTimeZoneConfig);
+            assert.file(
+                getFilesForOptions(angularFiles, {
+                    useSass: false,
+                    enableTranslation: true,
+                    serviceDiscoveryType: false,
+                    authenticationType: 'jwt',
+                    testFrameworks: []
+                })
+            );
+        });
+        it('generates a README with no undefined value', () => {
+            assert.noFileContent('README.md', /undefined/);
         });
     });
 
@@ -1298,6 +1436,8 @@ describe('JHipster generator', () => {
                 assert.file(expectedFiles.server);
                 assert.file(expectedFiles.userManagementServer);
                 assert.file(expectedFiles.maven);
+                assert.file(expectedFiles.mysql);
+                assert.file(expectedFiles.hibernateTimeZoneConfig);
                 assert.noFile(
                     getFilesForOptions(
                         angularFiles,
@@ -1312,6 +1452,14 @@ describe('JHipster generator', () => {
                         ['package.json']
                     )
                 );
+            });
+            it('generates a README with no undefined value', () => {
+                assert.noFileContent('README.md', /undefined/);
+            });
+            it('generates a pom.xml with no reference to client', () => {
+                assert.noFileContent('pom.xml', 'node.version');
+                assert.noFileContent('pom.xml', 'npm.version');
+                assert.noFileContent('pom.xml', 'frontend-maven-plugin');
             });
         });
 
@@ -1346,6 +1494,8 @@ describe('JHipster generator', () => {
                 assert.file(expectedFiles.server);
                 assert.file(expectedFiles.userManagementServer);
                 assert.file(expectedFiles.gradle);
+                assert.file(expectedFiles.mysql);
+                assert.file(expectedFiles.hibernateTimeZoneConfig);
                 assert.noFile(
                     getFilesForOptions(
                         angularFiles,
@@ -1521,6 +1671,8 @@ describe('JHipster generator', () => {
                 assert.file(expectedFiles.common);
                 assert.file(expectedFiles.server);
                 assert.file(expectedFiles.userManagementServer);
+                assert.file(expectedFiles.mysql);
+                assert.file(expectedFiles.hibernateTimeZoneConfig);
                 assert.file(expectedFiles.client);
                 assert.file(expectedFiles.eureka);
                 assert.noFile(expectedFiles.consul);
@@ -1639,6 +1791,7 @@ describe('JHipster generator', () => {
 
             it('creates expected files for UAA auth with the Gateway application type', () => {
                 assert.file(expectedFiles.gateway);
+                assert.file(expectedFiles.gatewayWithUaa);
                 assert.file(expectedFiles.dockerServices);
                 assert.file(expectedFiles.eureka);
                 assert.file(expectedFiles.hazelcast);
@@ -1754,6 +1907,44 @@ describe('JHipster generator', () => {
 
             it('creates expected files with the gateway application type', () => {
                 assert.file(expectedFiles.jwtServer);
+                assert.noFile(expectedFiles.gateway);
+                assert.noFile(expectedFiles.eureka);
+                assert.noFile(expectedFiles.consul);
+            });
+        });
+
+        describe('UAA gateway with no service discovery', () => {
+            before(done => {
+                helpers
+                    .run(path.join(__dirname, '../generators/app'))
+                    .withOptions({ 'from-cli': true, skipInstall: true, skipChecks: true, 'uaa-base-name': 'jhipsterApp' })
+                    .withPrompts({
+                        applicationType: 'gateway',
+                        baseName: 'jhipster',
+                        packageName: 'com.mycompany.myapp',
+                        packageFolder: 'com/mycompany/myapp',
+                        clientFramework: 'angularX',
+                        serviceDiscoveryType: false,
+                        authenticationType: 'uaa',
+                        uaaBaseName: 'jhipsterApp',
+                        cacheProvider: 'ehcache',
+                        enableHibernateCache: true,
+                        databaseType: 'sql',
+                        devDatabaseType: 'h2Memory',
+                        prodDatabaseType: 'mysql',
+                        useSass: false,
+                        enableTranslation: true,
+                        nativeLanguage: 'en',
+                        languages: ['fr'],
+                        buildTool: 'maven',
+                        rememberMeKey: '5c37379956bd1242f5636c8cb322c2966ad81277',
+                        serverSideOptions: []
+                    })
+                    .on('end', done);
+            });
+
+            it('creates expected files with the gateway application type', () => {
+                assert.file(expectedFiles.gatewayWithUaa);
                 assert.noFile(expectedFiles.gateway);
                 assert.noFile(expectedFiles.eureka);
                 assert.noFile(expectedFiles.consul);
